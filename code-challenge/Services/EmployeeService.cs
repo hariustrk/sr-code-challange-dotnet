@@ -49,7 +49,6 @@ namespace challenge.Services
                 {
                     // ensure the original has been removed, otherwise EF will complain another entity w/ same id already exists
                     _employeeRepository.SaveAsync().Wait();
-
                     _employeeRepository.Add(newEmployee);
                     // overwrite the new id with previous employee id
                     newEmployee.EmployeeId = originalEmployee.EmployeeId;
@@ -58,6 +57,29 @@ namespace challenge.Services
             }
 
             return newEmployee;
+        }
+        public ReportingStructure GetReportingStructure(string id)
+        {
+            var reportingStructure = new ReportingStructure();
+
+            if (String.IsNullOrEmpty(id))
+            {
+                return null;
+            }
+
+            var employee = _employeeRepository.GetById(id);
+            if (employee!=null)
+            {
+                reportingStructure.Employee = employee;    
+            } 
+            else
+            {
+                //Employee Not found
+                return null;
+            }
+            
+            return reportingStructure;
+
         }
     }
 }

@@ -14,6 +14,7 @@ using System.Net;
 using System.Net.Http;
 using code_challenge.Tests.Integration.Helpers;
 using System.Text;
+using System.Linq;
 
 namespace code_challenge.Tests.Integration
 {
@@ -77,7 +78,12 @@ namespace code_challenge.Tests.Integration
             var employeeId = "16a596ae-edd3-4847-99fe-c4518e82c86f";
             var expectedFirstName = "John";
             var expectedLastName = "Lennon";
-
+            var expectedReportsJohn = 2;
+            var expectedReportsPaul = 0;
+            var expectedReportsRingo = 2;
+            var expectedReportsPete = 0;
+            var expectedReportsGeorge = 0;
+            
             // Execute
             var getRequestTask = _httpClient.GetAsync($"api/employee/{employeeId}");
             var response = getRequestTask.Result;
@@ -87,12 +93,22 @@ namespace code_challenge.Tests.Integration
             var employee = response.DeserializeContent<Employee>();
             Assert.AreEqual(expectedFirstName, employee.FirstName);
             Assert.AreEqual(expectedLastName, employee.LastName);
+
+            //Ensure Structure of direct reports is intact
+            Assert.AreEqual(expectedReportsJohn, employee.DirectReports.Count());
+            Assert.AreEqual(expectedReportsPaul, employee.DirectReports[0].DirectReports.Count());
+            Assert.AreEqual(expectedReportsRingo, employee.DirectReports[1].DirectReports.Count());
+            Assert.AreEqual(expectedReportsPete, employee.DirectReports[1].DirectReports[0].DirectReports.Count());
+            Assert.AreEqual(expectedReportsGeorge, employee.DirectReports[1].DirectReports[0].DirectReports.Count());
+            
         }
 
         [TestMethod]
         public void UpdateEmployee_Returns_Ok()
         {
             // Arrange
+            var expectedReportsPete = 0;
+
             var employee = new Employee()
             {
                 EmployeeId = "03aa1462-ffa9-4978-901b-7c001562cf6f",
@@ -114,6 +130,7 @@ namespace code_challenge.Tests.Integration
 
             Assert.AreEqual(employee.FirstName, newEmployee.FirstName);
             Assert.AreEqual(employee.LastName, newEmployee.LastName);
+
         }
 
         [TestMethod]
@@ -134,6 +151,52 @@ namespace code_challenge.Tests.Integration
             var postRequestTask = _httpClient.PutAsync($"api/employee/{employee.EmployeeId}",
                new StringContent(requestContent, Encoding.UTF8, "application/json"));
             var response = postRequestTask.Result;
+
+            // Assert
+            Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+        [TestMethod]
+        public void GetEmployeeReportingStructure_Returns_Ok()
+        {
+            // Arrange
+            var johnEmployeeId = "16a596ae-edd3-4847-99fe-c4518e82c86f";
+            var johnTotalNumberOfreports = 4;
+            var expectedReportsJohn = 2;
+            var expectedReportsPaul = 0;
+            var expectedReportsRingo = 2;
+            var expectedReportsPete = 0;
+            var expectedReportsGeorge = 0;
+
+            // Execute
+            var getRequestTask = _httpClient.GetAsync($"api/employee/getReportingStructure/{johnEmployeeId}");
+            var response = getRequestTask.Result;
+
+            // Assert
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            var reportingStructure = response.DeserializeContent<ReportingStructure>();
+
+            //Verify the full structure is in tact
+            Assert.AreEqual(johnEmployeeId, reportingStructure.Employee.EmployeeId);
+            Assert.AreEqual(johnTotalNumberOfreports, reportingStructure.NumberOfReports);
+
+            //Ensure Structure of direct reports is intact
+            Assert.AreEqual(expectedReportsJohn, reportingStructure.Employee.DirectReports.Count());
+            Assert.AreEqual(expectedReportsPaul, reportingStructure.Employee.DirectReports[0].DirectReports.Count());
+            Assert.AreEqual(expectedReportsRingo, reportingStructure.Employee.DirectReports[1].DirectReports.Count());
+            Assert.AreEqual(expectedReportsPete, reportingStructure.Employee.DirectReports[1].DirectReports[0].DirectReports.Count());
+            Assert.AreEqual(expectedReportsGeorge, reportingStructure.Employee.DirectReports[1].DirectReports[0].DirectReports.Count());
+        }
+
+        [TestMethod]
+        public void GetEmployeeReportingStructure_Returns_NotFound()
+        {
+            // Arrange
+            var employeeId = "16a596ae-edd3-4847-99fe-c4518e82c861"; //Invalid id
+
+            // Execute
+            var getRequestTask = _httpClient.GetAsync($"api/employee/getReportingStructure/{employeeId}");
+            var response = getRequestTask.Result;
 
             // Assert
             Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
