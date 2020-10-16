@@ -58,6 +58,7 @@ namespace challenge.Services
 
             return newEmployee;
         }
+
         public ReportingStructure GetReportingStructure(string id)
         {
             var reportingStructure = new ReportingStructure();
@@ -79,7 +80,39 @@ namespace challenge.Services
             }
             
             return reportingStructure;
+        }
+        
+        public Compensation GetCompensationById(string id)
+        {
+            if (String.IsNullOrEmpty(id))
+            {
+                return null;
+            }
 
+            var compensation = _employeeRepository.GetCompensation(id);
+           
+            return compensation;
+        }
+
+        public Compensation CreateCompensation(Compensation compensation)
+        {
+            if (_employeeRepository.GetCompensation(compensation.EmployeeId)!=null)
+            {
+                _logger.LogDebug($"Compensation already exists on employee { compensation.EmployeeId} ");
+                throw new Exception($"Compensation already exists on employee {compensation.EmployeeId}");
+            }
+            var employee = GetById(compensation.EmployeeId);
+            if (employee==null)
+            {
+                _logger.LogDebug($"Employee does not exist { compensation.EmployeeId} ");
+                throw new Exception($"Employee does not exist { compensation.EmployeeId}");
+            }
+            var newCompensation = _employeeRepository.CreateCompensation(compensation);
+            _employeeRepository.SaveAsync().Wait();
+
+            newCompensation.Employee = employee;
+            
+            return newCompensation;
         }
     }
 }

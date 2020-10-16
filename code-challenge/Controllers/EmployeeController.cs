@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using challenge.Services;
 using challenge.Models;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace challenge.Controllers
 {
@@ -58,6 +59,7 @@ namespace challenge.Controllers
             return Ok(newEmployee);
         }
 
+        
         [HttpGet("getReportingStructure/{id}", Name = "getReportingStructure")]
         public IActionResult GetReportingStructure(String id)
         {
@@ -71,6 +73,44 @@ namespace challenge.Controllers
             }
 
             return Ok(reportingStructure);
+        }
+        
+        [HttpGet("getCompensation/{id}", Name = "getCompensation")]
+        public IActionResult GetCompensation(String id)
+        {
+            _logger.LogDebug($"Recieved compensation get request for '{id}'");
+
+            var compensation = _employeeService.GetCompensationById(id);
+
+            if (compensation == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(compensation);
+        }
+
+        [HttpPost("createCompensation", Name = "createCompensation")]
+        public IActionResult CreateCompensation([FromBody] Compensation compensation)
+        {
+            //Validate
+            if (compensation == null || string.IsNullOrEmpty(compensation.EmployeeId))
+            {
+                _logger.LogDebug($"Received compensation no employee information");
+                return NotFound();
+            }
+            
+            _logger.LogDebug($"Received compensation create request for '{compensation.EmployeeId}'");
+
+            try
+            {
+                _employeeService.CreateCompensation(compensation);
+            } catch(Exception e)
+            {
+                return BadRequest(e);
+            }
+
+            return CreatedAtRoute("getCompensation", new { id = compensation.EmployeeId },compensation);
         }
     }
 }

@@ -1,0 +1,13 @@
+﻿[
+	{
+		"employeeId": "16a596ae-edd3-4847-99fe-c4518e82c86f",
+		"salary": 100001.01,
+		"effectiveDate": "2021-10-13T20:09:49.0-04:00"
+	},
+	{
+		"employeeId" : "b7839309-3348-463b-a7e3-5de1c168beb3",
+		"salary": 100002.02,
+		"effectiveDate": "2022-10-13T20:09:49.0-04:00"
+	}
+]
+
